@@ -21,6 +21,9 @@
 #include <QJsonArray>
 
 #include <QProcess>
+extern "C" {
+#include "dht/Raspberry_Pi_2/pi_2_dht_read.h"
+}
 #define LINUX
 
 namespace Ui {
@@ -44,12 +47,14 @@ public slots:
 	void get_net_usage();
 #ifdef LINUX
 	void onSensor();
+	void getDHT();
 #endif
 
 private:
 	Ui::MainWindow *ui;
 	QTimer *timer;
 #ifdef LINUX
+	QTimer *timer_DHT;
 	QTimer *timer_sensor;
 	int f_bh1750;
 #endif

@@ -21,6 +21,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	timer->start(1000);
 
 #ifdef LINUX
+	timer_DHT = new QTimer();
+	connect(timer_DHT,SIGNAL(timeout()),this,SLOT(getDHT()));
+	timer_DHT->start(15000);
+
 	timer_sensor = new QTimer();
 	connect(timer_sensor,SIGNAL(timeout()),this,SLOT(onSensor()));
 	timer_sensor->start(1200);
@@ -169,6 +173,13 @@ void MainWindow::onSensor()
 		printf("read light error\r\n");
 	}
 	timer_sensor->start(200);
+}
+
+void MainWindow::getDHT()
+{
+	float humidity = 0, temperature = 0;
+	int result = pi_2_dht_read(22, 4, &humidity, &temperature);
+	printf("\n\thum: %6.3f  temp: %6.3f\n",humidity,temperature);
 }
 #endif
 
