@@ -84,6 +84,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
    ui->lb_date->setFont(font);
    ui->lb_weather->setFont(font);
    ui->lb_cputemp->setFont(font);
+   ui->lb_sensor->setFont(font);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -158,13 +159,13 @@ void MainWindow::onSensor()
 		{
 			grayscale=250;
 		}
-		else if(light<5)
+		else if(flight<3.5)
 		{
 			grayscale=25;
 		}
 		else
 		{
-			grayscale=light*5;
+			grayscale=light*8;
 		}
 		this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
 	}
@@ -180,6 +181,11 @@ void MainWindow::getDHT()
 	float humidity = 0, temperature = 0;
 	int result = pi_2_dht_read(22, 4, &humidity, &temperature);
 	printf("\n\thum: %6.3f  temp: %6.3f\n",humidity,temperature);
+	if((humidity != 0) && (temperature != 0))
+	{
+		ui->lb_sensor->setText("温度：" + QString::number(temperature) +
+					"℃ 湿度："+ QString::number(humidity) + "%");
+	}
 }
 #endif
 
