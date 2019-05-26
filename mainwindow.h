@@ -22,7 +22,9 @@
 
 #include <QProcess>
 extern "C" {
-#include "dht/Raspberry_Pi_2/pi_2_dht_read.h"
+	#include "i2c/bh1750.h"
+	#include "i2c/bmp180.h"
+	#include "dht/Raspberry_Pi_2/pi_2_dht_read.h"
 }
 #define LINUX
 
@@ -56,7 +58,7 @@ private:
 #ifdef LINUX
 	QTimer *timer_DHT;
 	QTimer *timer_sensor;
-	int f_bh1750;
+	int f_i2c;
 #endif
 	QFile *cputemp;
 

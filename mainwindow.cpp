@@ -2,14 +2,6 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QIODevice>
-#ifdef LINUX
-	#include <fcntl.h>
-	#include <linux/i2c-dev.h>
-	#include <errno.h>
-	#include <sys/ioctl.h>
-	#include<unistd.h>
-	#define I2C_ADDR 0x23
-#endif
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -29,30 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(timer_sensor,SIGNAL(timeout()),this,SLOT(onSensor()));
 	timer_sensor->start(1200);
 
-	char val;
-	f_bh1750 = open("/dev/i2c-1",O_RDWR);
-	if(f_bh1750<0)
-	{
-		printf("err open file:%s\r\n",strerror(errno));
-		timer_sensor->stop();
-	}
-	if(ioctl(f_bh1750,I2C_SLAVE,I2C_ADDR) < 0)
-	{
-		printf("ioctl error : %s\r\n",strerror(errno));
-		timer_sensor->stop();
-	}
-	val=0x01;
-	if(write(f_bh1750,&val,1)<0)
-	{
-		printf("write 0x01 err\r\n");
-	}
-	val=0x10;
-	if(write(f_bh1750,&val,1)<0)
-	{
-		printf("write 0x10 err\r\n");
-	}
-
-
 #endif
 
 	ui->lcd_time->setDigitCount(8);			//设置lcd位数
@@ -62,6 +30,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	//ui->lcd_time->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
 	this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
 	this->setCursor(Qt::BlankCursor);	//隐藏鼠标
+
+	f_i2c=open("/dev/i2c-1",O_RDWR);
+	if(f_i2c<0)
+	{
+		printf("err open file:%s\r\n",strerror(errno));
+		timer_sensor->stop();
+	}
 
 	manager = new QNetworkAccessManager(this);
 	connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(replyFinished(QNetworkReply*)));
@@ -146,32 +121,33 @@ void MainWindow::onTimerOut()
 #ifdef LINUX
 void MainWindow::onSensor()
 {
-	char buf[3];
-	float flight;
-	int light;
-
-	if(read(f_bh1750,&buf,3))
+	float light=getbh1750(&f_i2c);
+	if(light)
 	{
-		flight=(buf[0]*256+buf[1])/1.2;
-		printf("light is %6.3f\r\n",flight);
-		light=int(flight);
 		if(light>30)
 		{
 			grayscale=250;
 		}
-		else if(flight<3.5)
+		else if(light<3.5)
 		{
 			grayscale=25;
 		}
 		else
 		{
-			grayscale=light*8;
+			grayscale=int(light*8);
 		}
 		this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
 	}
 	else
 	{
 		printf("read light error\r\n");
+	}
+	printf("light is %6.3f\r\n",light);
+
+	double temp=0,pressure=0;
+	if(getbmp180(&f_i2c,&temp,&pressure)==0)
+	{
+		ui->lb_sensor->setText("温度："+QString::number(temp)+" 气压："+QString::number(pressure));
 	}
 	timer_sensor->start(200);
 }
