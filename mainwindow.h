@@ -21,7 +21,10 @@
 #include <QJsonArray>
 
 #include <QProcess>
+
+#ifndef WINDOWS
 #define LINUX
+#endif
 
 #ifdef LINUX
 extern "C" {
