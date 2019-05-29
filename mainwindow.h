@@ -21,12 +21,15 @@
 #include <QJsonArray>
 
 #include <QProcess>
+#define LINUX
+
+#ifdef LINUX
 extern "C" {
 	#include "i2c/bh1750.h"
 	#include "i2c/bmp180.h"
 	#include "dht/Raspberry_Pi_2/pi_2_dht_read.h"
 }
-#define LINUX
+#endif
 
 namespace Ui {
 class MainWindow;
@@ -46,10 +49,10 @@ public slots:
 	void onTimerOut();
 	void replyFinished(QNetworkReply *reply);
 	void getWeather();
-	void get_net_usage();
 #ifdef LINUX
 	void onSensor();
 	void getDHT();
+	void get_net_usage();
 #endif
 
 private:
@@ -59,8 +62,8 @@ private:
 	QTimer *timer_DHT;
 	QTimer *timer_sensor;
 	int f_i2c;
-#endif
 	QFile *cputemp;
+#endif
 
 	QNetworkAccessManager *manager;
 

@@ -25,17 +25,28 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp \
-        dht/common_dht_read.c \
-        dht/Raspberry_Pi_2/pi_2_dht_read.c \
-        dht/Raspberry_Pi_2/pi_2_mmio.c
+		mainwindow.cpp
 
 
 HEADERS += \
-        mainwindow.h \
-        dht/Raspberry_Pi_2/pi_2_dht_read.h \
-        dht/Raspberry_Pi_2/pi_2_mmio.h \
-        dht/common_dht_read.h
+		mainwindow.h
 
 FORMS += \
-        mainwindow.ui
+		mainwindow.ui
+
+
+unix {
+message("USE I2C")
+SOURCES += dht/common_dht_read.c \
+		dht/Raspberry_Pi_2/pi_2_dht_read.c \
+		dht/Raspberry_Pi_2/pi_2_mmio.c \
+		i2c/bh1750.c \
+		i2c/bmp180.c
+
+HEADERS += dht/Raspberry_Pi_2/pi_2_dht_read.h \
+        dht/Raspberry_Pi_2/pi_2_mmio.h \
+        dht/common_dht_read.h \
+        i2c/bh1750.h \
+        i2c/bmp180.h
+}
+

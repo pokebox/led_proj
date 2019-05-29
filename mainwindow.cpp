@@ -15,21 +15,11 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef LINUX
 	timer_DHT = new QTimer();
 	connect(timer_DHT,SIGNAL(timeout()),this,SLOT(getDHT()));
-	timer_DHT->start(15000);
+	timer_DHT->start(10000);
 
 	timer_sensor = new QTimer();
 	connect(timer_sensor,SIGNAL(timeout()),this,SLOT(onSensor()));
-	timer_sensor->start(1200);
-
-#endif
-
-	ui->lcd_time->setDigitCount(8);			//设置lcd位数
-	ui->lcd_time->setMode(QLCDNumber::Dec);	//设置显示模式十进制
-	ui->lcd_time->setSegmentStyle(QLCDNumber::Flat);
-
-	//ui->lcd_time->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
-	this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
-	this->setCursor(Qt::BlankCursor);	//隐藏鼠标
+	timer_sensor->start(800);
 
 	f_i2c=open("/dev/i2c-1",O_RDWR);
 	if(f_i2c<0)
@@ -37,6 +27,14 @@ MainWindow::MainWindow(QWidget *parent) :
 		printf("err open file:%s\r\n",strerror(errno));
 		timer_sensor->stop();
 	}
+#endif
+
+	ui->lcd_time->setDigitCount(8);			//设置lcd位数
+	ui->lcd_time->setMode(QLCDNumber::Dec);	//设置显示模式十进制
+	ui->lcd_time->setSegmentStyle(QLCDNumber::Flat);
+
+	this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
+	this->setCursor(Qt::BlankCursor);	//隐藏鼠标
 
 	manager = new QNetworkAccessManager(this);
 	connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(replyFinished(QNetworkReply*)));
@@ -51,15 +49,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
-   QMainWindow::resizeEvent(event);
-   //窗口大小改变修改字体大小
-   int fontsize =  int(this->width() / 31.55);	//计算字体大小
-   QFont font = ui->lb_date->font();		//取得现有字体
-   font.setPointSize(fontsize);				//设置字体大小
-   ui->lb_date->setFont(font);
-   ui->lb_weather->setFont(font);
-   ui->lb_cputemp->setFont(font);
-   ui->lb_sensor->setFont(font);
+	QMainWindow::resizeEvent(event);
+	//窗口大小改变修改字体大小
+	int fontsize =  int(this->width() / 31.55);	//计算字体大小
+	QFont font = ui->lb_date->font();		//取得现有字体
+	font.setPointSize(fontsize);				//设置字体大小
+	ui->lb_date->setFont(font);
+	ui->lb_weather->setFont(font);
+	ui->lb_cputemp->setFont(font);
+	ui->lb_sensor->setFont(font);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -89,25 +87,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		break;
 	}
 }
+
 void MainWindow::onTimerOut()
 {
 	QDateTime time = QDateTime::currentDateTime();
 	ui->lb_date->setText(time.toString("yyyy年MM月dd日 ddd"));
 	ui->lcd_time->display(time.toString("hh:mm:ss"));
-
-	cputemp = new QFile("/sys/class/thermal/thermal_zone0/temp");
-	if(!cputemp->open(QIODevice::ReadOnly | QIODevice::Text))
-	{
-		qDebug()<<"读取温度失败";
-	}
-	else
-	{
-		QTextStream stream(cputemp);
-		QString string = stream.readAll();
-		cputemp->close();
-		QString s = QString::number(string.toLong() /1000);
-		ui->lb_cputemp->setText("CPU: "+s+" ℃");
-	}
 
 	bool ok=true;
 	if((time.toString("mm") == "10") || (time.toString("mm") == "30") || (time.toString("mm") == "50"))
@@ -121,8 +106,15 @@ void MainWindow::onTimerOut()
 #ifdef LINUX
 void MainWindow::onSensor()
 {
+	bool ok;
+	QDateTime time = QDateTime::currentDateTime();
 	float light=getbh1750(&f_i2c);
-	if(light)
+	if( (time.toString("hh").toInt(&ok) >= 7 ) && (time.toString("hh").toInt(&ok) <= 19 ) )
+	{
+		grayscale=255;
+		this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
+	}
+	else if(light>=0)
 	{
 		if(light>30)
 		{
@@ -141,19 +133,22 @@ void MainWindow::onSensor()
 	else
 	{
 		printf("read light error\r\n");
+		grayscale=255;
+		this->setStyleSheet("color: rgb("+QString::number(grayscale)+", "+QString::number(grayscale)+", "+QString::number(grayscale)+");background-color: rgb(0, 0, 0);");
 	}
 	printf("light is %6.3f\r\n",light);
 
 	double temp=0,pressure=0;
 	if(getbmp180(&f_i2c,&temp,&pressure)==0)
 	{
-		ui->lb_sensor->setText("温度："+QString::number(temp)+" 气压："+QString::number(pressure));
+		ui->lb_sensor->setText("温度："+QString::number(temp,10,2)+" 气压："+QString::number(pressure, 10, 2));
 	}
 	timer_sensor->start(200);
 }
 
 void MainWindow::getDHT()
 {
+	/*
 	float humidity = 0, temperature = 0;
 	int result = pi_2_dht_read(22, 4, &humidity, &temperature);
 	printf("\n\thum: %6.3f  temp: %6.3f\n",humidity,temperature);
@@ -162,7 +157,57 @@ void MainWindow::getDHT()
 		ui->lb_sensor->setText("温度：" + QString::number(temperature) +
 					"℃ 湿度："+ QString::number(humidity) + "%");
 	}
+	*/
+
+	cputemp = new QFile("/sys/class/thermal/thermal_zone0/temp");
+	if(!cputemp->open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		qDebug()<<"读取温度失败";
+	}
+	else
+	{
+		QTextStream stream(cputemp);
+		QString string = stream.readAll();
+		cputemp->close();
+		QString s = QString::number(string.toLong() /1000);
+		ui->lb_cputemp->setText("CPU: "+s+" ℃");
+	}
+	cputemp->close();
 }
+
+void MainWindow::get_net_usage()
+{
+	QProcess process;
+	process.start("cat /proc/net/dev");        //读取文件/proc/net/dev获取网络收发包数量，再除取样时间得到网络速度
+	process.waitForFinished();
+	process.readLine();
+	process.readLine();
+	while(!process.atEnd())
+	{
+		QString str = process.readLine();
+		str.replace("\n","");
+		str.replace(QRegExp("( ){1,}")," ");
+		//qDebug()<<str;
+		auto lst = str.split(" ");
+		qDebug()<<lst[0];
+		if(lst.size() > 9 && lst[1] == "eth0:")
+		{
+			double recv = 0;
+			double send = 0;
+			if(lst.size() > 1)
+				recv = lst[1].toDouble();
+			if(lst.size() > 9)
+				send = lst[9].toDouble();
+			//qDebug()<<lst[0].toStdString().c_str();
+			//qDebug()<<(recv - m_recv_bytes__) / (m_timer_interval__ / 1000.0),(send - m_send_bytes__) / (m_timer_interval__ / 1000.0);
+
+			qDebug("%s  接收速度:%.0lfbyte/s 发送速度:%.0lfbyte/s",lst[0].toStdString().c_str(),(recv - m_recv_bytes__) / (1000 / 1000.0),(send - m_send_bytes__) / (1000 / 1000.0));
+			m_recv_bytes__ = recv;
+			m_send_bytes__ = send;
+		}
+	}
+}
+
 #endif
 
 void MainWindow::getWeather()
@@ -207,35 +252,3 @@ void MainWindow::replyFinished(QNetworkReply *reply)
 }
 
 
-void MainWindow::get_net_usage()
-{
-	QProcess process;
-	process.start("cat /proc/net/dev");        //读取文件/proc/net/dev获取网络收发包数量，再除取样时间得到网络速度
-	process.waitForFinished();
-	process.readLine();
-	process.readLine();
-	while(!process.atEnd())
-	{
-		QString str = process.readLine();
-		str.replace("\n","");
-		str.replace(QRegExp("( ){1,}")," ");
-		//qDebug()<<str;
-		auto lst = str.split(" ");
-		qDebug()<<lst[0];
-		if(lst.size() > 9 && lst[1] == "eth0:")
-		{
-			double recv = 0;
-			double send = 0;
-			if(lst.size() > 1)
-				recv = lst[1].toDouble();
-			if(lst.size() > 9)
-				send = lst[9].toDouble();
-			//qDebug()<<lst[0].toStdString().c_str();
-			//qDebug()<<(recv - m_recv_bytes__) / (m_timer_interval__ / 1000.0),(send - m_send_bytes__) / (m_timer_interval__ / 1000.0);
-
-			qDebug("%s  接收速度:%.0lfbyte/s 发送速度:%.0lfbyte/s",lst[0].toStdString().c_str(),(recv - m_recv_bytes__) / (1000 / 1000.0),(send - m_send_bytes__) / (1000 / 1000.0));
-			m_recv_bytes__ = recv;
-			m_send_bytes__ = send;
-		}
-	}
-}
