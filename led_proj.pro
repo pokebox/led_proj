@@ -37,6 +37,7 @@ FORMS += \
 
 unix {
 message("USE I2C")
+DEFINES+=LINUX
 SOURCES += dht/common_dht_read.c \
 		dht/Raspberry_Pi_2/pi_2_dht_read.c \
 		dht/Raspberry_Pi_2/pi_2_mmio.c \
@@ -48,5 +49,9 @@ HEADERS += dht/Raspberry_Pi_2/pi_2_dht_read.h \
         dht/common_dht_read.h \
         i2c/bh1750.h \
         i2c/bmp180.h
+}
+else
+{
+DEFINES+=WINDOWS
 }
 

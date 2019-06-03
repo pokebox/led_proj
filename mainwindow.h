@@ -15,16 +15,15 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
+#include <QTcpSocket>
 
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include <QProcess>
+#include <QSettings>
 
-#ifndef WINDOWS
-#define LINUX
-#endif
+#include <QProcess>
 
 #ifdef LINUX
 extern "C" {
@@ -43,10 +42,14 @@ class MainWindow : public QMainWindow
 	Q_OBJECT
 
 public:
-	explicit MainWindow(QWidget *parent = 0);
+	explicit MainWindow(QWidget *parent = nullptr);
 	~MainWindow();
 	void resizeEvent(QResizeEvent* event);
 	void keyPressEvent(QKeyEvent *event);
+	void socketWrite(QByteArray data);
+	void socketOpen();
+	void socketRead();
+	void upInterface();
 
 public slots:
 	void onTimerOut();
@@ -69,10 +72,20 @@ private:
 #endif
 
 	QNetworkAccessManager *manager;
+	QTcpSocket *socket;
+	QSettings *config;
+	QString weather_apikey = "";
+	QString weather_city = "";
+	QString socketIP="127.0.0.1";
+	quint16 socketPort=19085;
 
 	double m_send_bytes__ = 0;
 	double m_recv_bytes__ = 0;
-	int grayscale=255;
+	int grayscale=255;	//灰度
+	int color_R = 1;	//红色
+	int color_G = 1;	//绿色
+	int color_B = 1;	//蓝色
+	int color_mode = 7;	//七种颜色模式
 };
 
 #endif // MAINWINDOW_H
