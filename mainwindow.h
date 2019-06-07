@@ -25,6 +25,7 @@
 
 #include <QProcess>
 
+#define LOW_BATTERY 2800
 #ifdef LINUX
 extern "C" {
 	#include "i2c/bh1750.h"

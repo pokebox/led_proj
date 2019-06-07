@@ -75,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	showFullScreen();
 	getWeather();
 	socketOpen();
+	socketWrite("{\"cmd\": \"getDeviceList\"}");
 }
 
 MainWindow::~MainWindow()
@@ -86,7 +87,10 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 {
 	QMainWindow::resizeEvent(event);
 	//窗口大小改变修改字体大小
-	int fontsize =  int(this->width() / 31.55);	//计算字体大小
+	int width=this->width();
+	if(width>1920)
+		width=1920;
+	int fontsize =  int(width / 31.55);	//计算字体大小
 	QFont font = ui->lb_date->font();		//取得现有字体
 	font.setPointSize(fontsize);				//设置字体大小
 	ui->lb_date->setFont(font);
@@ -138,7 +142,10 @@ void MainWindow::onTimerOut()
 	if((time.toString("mm") == "01") || (time.toString("mm") == "30") || (time.toString("mm") == "45"))
 	{
 		if((time.toString("ss").toInt(&ok,10) >= 0) && (time.toString("ss").toInt(&ok,10) <= 1))
+		{
 			getWeather();
+			socketWrite("{\"cmd\": \"getDeviceList\"}");
+		}
 	}
 	//get_net_usage();
 }
@@ -193,7 +200,7 @@ void MainWindow::onSensor()
 	double temp=0,pressure=0;
 	if(getbmp180(&f_i2c,&temp,&pressure)==0)
 	{
-		ui->lb_sensor->setText("温度："+QString::number(temp,10,2)+" 气压："+QString::number(pressure, 10, 2));
+		ui->lb_sensor->setText("温度："+QString::number(temp,10,1)+" 气压："+QString::number(pressure, 10, 2));
 	}
 	timer_sensor->start(200);
 }
@@ -383,6 +390,20 @@ void MainWindow::socketOpen()
 	}
 }
 
+void MainWindow::socketWrite(QByteArray data)
+{
+	qint64 writeResult = socket->write(data);
+	bool boolFlush = socket->flush();
+	if(writeResult != -1 && boolFlush==1)
+	{
+		if(writeResult==0)
+		{
+			qDebug()<<"写数据结果回0";
+		}
+		qDebug()<<"写数据成功\n";
+	}
+}
+
 void MainWindow::socketRead()
 {
 	QByteArray buff;
@@ -514,32 +535,77 @@ void MainWindow::socketRead()
 					if(obj.value("model").toString() == "magnet")	//门磁传感器
 					{
 						qDebug()<<dataobj.value("status").toString();
+						/*
 						ui->label_3->setText("门状态："+dataobj.value("status").toString() +
 											  "电池电压：" + QString::number(dataobj.value("voltage").toDouble()/1000.0));
+						*/
 						qDebug()<<dataobj.value("voltage").toDouble();
+
+						if(!dataobj.value("voltage").isUndefined())
+						{
+							if(dataobj.value("voltage").toDouble()<LOW_BATTERY)
+							{
+								ui->label_1->setText("门磁电量低");
+							}
+						}
 					}
 					else if(obj.value("model").toString() == "sensor_ht")	//温湿度传感器
 					{
+						bool ok;
 						qDebug()<<"温湿度传感器";
+						/*
 						ui->label_1->setText("温度："+dataobj.value("temperature").toString() +
 												  "湿度："+dataobj.value("humidity").toString() +
 												  "电池电压："+QString::number(dataobj.value("voltage").toDouble()/1000.0));
+						*/
+						if(dataobj.value("temperature").isUndefined())		//没有温度数据
+						{
+							if(!dataobj.value("humidity").isUndefined())	//有湿度数据
+							{
+								ui->label_4->setText("湿度："+QString::number(dataobj.value("humidity").toString().toDouble(&ok)/100.0) + "%");
+							}
+						}
+						else if(dataobj.value("humidity").isUndefined())	//没有湿度数据
+						{
+							if(!dataobj.value("temperature").isUndefined())	//有温度数据
+							{
+								ui->label_4->setText("温度："+QString::number(dataobj.value("temperature").toString().toDouble(&ok)/100.0) + "℃");
+							}
+						}
+						else
+						{
+							ui->label_4->setText("温度："+QString::number(dataobj.value("temperature").toString().toDouble(&ok)/100.0) + "℃ " +
+												 "湿度："+QString::number(dataobj.value("humidity").toString().toDouble(&ok)/100.0) + "%");
+						}
+
+						if(!dataobj.value("voltage").isUndefined())
+						{
+							if(dataobj.value("voltage").toDouble()<LOW_BATTERY)
+								ui->label_1->setText("温湿度电量低");
+						}
+
 					}
 					else if(obj.value("model").toString() == "motion")	//人体感应
 					{
 						qDebug()<<"人体感应";
 						//sensor_sid=obj.value("sid").toString();
-						ui->label_4->setText("人体感应：\n电池电压："+QString::number(dataobj.value("voltage").toDouble()/1000.0));
+						//ui->label_4->setText("人体感应：\n电池电压："+QString::number(dataobj.value("voltage").toDouble()/1000.0));
+						if(!dataobj.value("voltage").isUndefined())
+							if(dataobj.value("voltage").toDouble()<LOW_BATTERY)
+								ui->label_1->setText("人体感应电量低");
 					}
 					else if(obj.value("model").toString() == "plug")	//插座
 					{
 						qDebug()<<"插座";
 						//plug_sid=obj.value("sid").toString();
+						/*
 						bool ok;
 						ui->label_2->setText("插座状态："  + dataobj.value("status").toString() + "\n" +
 											 "累计用电量：" + QString::number(dataobj.value("power_consumed").toString().toDouble(&ok)/1000.0) + "kWh\n" +
 											 "负载功率："  + QString::number(dataobj.value("load_power").toString().toDouble(&ok)/1000.0));
 						qDebug()<<dataobj;
+						*/
+
 						qDebug()<<dataobj.value("power_consumed");
 					}
 				}
