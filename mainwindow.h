@@ -25,6 +25,9 @@
 
 #include <QProcess>
 
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+
 #define LOW_BATTERY 2800
 #ifdef LINUX
 extern "C" {
@@ -51,6 +54,8 @@ public:
 	void socketOpen();
 	void socketRead();
 	void upInterface();
+	void StringToHex(QString str, QByteArray & senddata);
+	char ConvertHexChar(char ch);
 
 public slots:
 	void onTimerOut();
@@ -65,6 +70,7 @@ public slots:
 private:
 	Ui::MainWindow *ui;
 	QTimer *timer;
+	QSerialPort *serial;    //全局串口
 #ifdef LINUX
 	QTimer *timer_DHT;
 	QTimer *timer_sensor;
@@ -79,6 +85,8 @@ private:
 	QString weather_city = "";
 	QString socketIP="127.0.0.1";
 	quint16 socketPort=19085;
+	QString PortName = "";
+	quint16 BaudRate=9600;
 
 	double m_send_bytes__ = 0;
 	double m_recv_bytes__ = 0;

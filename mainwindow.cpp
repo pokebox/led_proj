@@ -8,10 +8,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	setWindowTitle("LED投影时钟");
 
 	qDebug()<<QCoreApplication::applicationDirPath();
 	config=new QSettings(QCoreApplication::applicationDirPath()+"/led_proj.ini",QSettings::IniFormat);
 
+	//天气
 	config->beginGroup("weather");
 	if(config->value("apikey").toString() == "")
 		config->setValue("apikey","");
@@ -24,12 +26,14 @@ MainWindow::MainWindow(QWidget *parent) :
 		weather_city=config->value("city").toString();
 	config->endGroup();
 
+	bool ok;
+	//socket控制配置
 	config->beginGroup("socket");
 	if(config->value("ip").toString() == "")
 		config->setValue("ip","127.0.0.1");
 	else
 		socketIP=config->value("ip").toString();
-	bool ok;
+
 	if(config->value("port").toUInt(&ok) == 0 || ok == false)
 		config->setValue("port",19085);
 	else
@@ -37,6 +41,25 @@ MainWindow::MainWindow(QWidget *parent) :
 	qDebug()<<socketPort;
 	config->endGroup();
 
+	//串口配置文件
+	config->beginGroup("serial");
+	//串口名
+	if(config->value("PortName").toString() == "")
+	{
+		config->setValue("PortName","/dev/ttyUSB0");
+		PortName="/dev/ttyUSB0";
+	}
+	else
+		PortName=config->value("PortName").toString();
+	//波特率
+	if(config->value("BaudRate").toUInt(&ok) == 0 || ok == false)
+		config->setValue("BaudRate",9600);
+	else
+		BaudRate=config->value("BaudRate").toUInt(&ok);
+	qDebug()<<BaudRate;
+
+	serial = new QSerialPort;
+	serial->setPortName(PortName);	//先选择串口
 
 	timer = new QTimer();
 	connect(timer,SIGNAL(timeout()),this,SLOT(onTimerOut()));
@@ -80,6 +103,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+	serial->clear();	//销毁程序前先关闭串口
+	serial->close();
 	delete ui;
 }
 
@@ -384,6 +409,7 @@ void MainWindow::socketOpen()
 	if(!socket->waitForConnected(3000))
 	{
 		qDebug()<<"连接失败";
+		ui->label_1->setText("socket失败;"+ui->label_1->text());
 	}
 	else {
 		qDebug()<<"连接成功";
@@ -423,7 +449,7 @@ void MainWindow::socketRead()
 					//qDebug()<<obj.value("token").toString();
 				}
 			}
-			else if(obj.value("cmd") == "report")	//主动回复
+			else if(obj.value("cmd").toString() == "report")	//主动回复
 			{
 				qDebug()<<obj;
 				if(obj.value("model") == "motion")	//人体传感器
@@ -514,6 +540,86 @@ void MainWindow::socketRead()
 					{
 						ui->label_2->setText("长按松开");
 					}
+				}
+			}
+			else if(obj.value("control").toString() == "display")
+			{
+				qDebug()<<obj.value("data");
+				if(obj.value("data").toObject().value("mode") == "serialdata")
+				{
+					//发串口数据，打开投影电源
+					//serial->open();
+					if(serial->open(QIODevice::ReadWrite))
+					{
+						serial->setBaudRate(BaudRate);
+						serial->setDataBits(QSerialPort::Data8);			//设置数据位
+						serial->setParity(QSerialPort::NoParity);			//设置校验位
+						serial->setStopBits(QSerialPort::OneStop);			//设置停止位
+						serial->setFlowControl(QSerialPort::NoFlowControl);
+						qDebug()<<"串口已打开";
+
+						QString data=obj.value("data").toObject().value("value").toString();
+						QByteArray sendhex;
+						qDebug()<<"writeData将写入："+data;
+						StringToHex(data,sendhex);
+						serial->write(sendhex);
+						serial->flush();
+						serial->close();
+					}
+					else
+					{
+						qDebug()<<"串口无法打开";
+						//ui->label_1->setText("串口打开失败");
+					}
+				}
+				if(obj.value("data").toObject().value("mode") == "color")
+				{
+					int color=obj.value("data").toObject().value("value").toInt();
+					qDebug()<<color;
+					if(color>7) color=1;
+					switch (color) {
+						case 1:
+							color_R=1;
+							color_G=0;
+							color_B=0;
+							break;
+						case 2:
+							color_R=0;
+							color_G=1;
+							color_B=0;
+							break;
+						case 3:
+							color_R=0;
+							color_G=0;
+							color_B=1;
+							break;
+						case 4:
+							color_R=1;
+							color_G=1;
+							color_B=0;
+							break;
+						case 5:
+							color_R=1;
+							color_G=0;
+							color_B=1;
+							break;
+						case 6:
+							color_R=0;
+							color_G=1;
+							color_B=1;
+							break;
+						case 7:
+							color_R=1;
+							color_G=1;
+							color_B=1;
+							break;
+						default:
+							color_R=1;
+							color_G=1;
+							color_B=1;
+							break;
+					}
+					upInterface();
 				}
 			}
 			else
@@ -614,4 +720,53 @@ void MainWindow::socketRead()
 			}
 		}
 	}
+}
+
+
+char MainWindow::ConvertHexChar(char ch)
+{
+	if((ch >= '0') && (ch <= '9'))
+		return ch-0x30;
+	else if((ch >= 'A') && (ch <= 'F'))
+		return ch-'A'+10;
+	else if((ch >= 'a') && (ch <= 'f'))
+		return ch-'a'+10;
+	//else return (-1);
+	else
+	{
+		return ch-ch;		//不在0-f范围内的会发送成0
+	}
+}
+
+void MainWindow::StringToHex(QString str, QByteArray & senddata)  //字符串转换成16进制数据0-F
+{
+	int hexdata,lowhexdata;
+	int hexdatalen = 0;
+	int len = str.length();
+	senddata.resize(len/2);
+	char lstr,hstr;
+	for(int i=0; i<len; )
+	{
+		//char lstr,
+		hstr=str[i].toLatin1();
+		if(hstr == ' ')
+		{
+			i++;
+			continue;
+		}
+		i++;
+		if(i >= len)
+			break;
+		lstr = str[i].toLatin1();
+		hexdata = ConvertHexChar(hstr);
+		lowhexdata = ConvertHexChar(lstr);
+		if((hexdata == 16) || (lowhexdata == 16))
+			break;
+		else
+			hexdata = hexdata*16+lowhexdata;
+		i++;
+		senddata[hexdatalen] = static_cast<char>(hexdata);
+		hexdatalen++;
+	}
+	senddata.resize(hexdatalen);
 }
