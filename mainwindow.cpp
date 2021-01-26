@@ -118,6 +118,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 	int fontsize =  int(width / 31.55);	//计算字体大小
 	QFont font = ui->lb_date->font();		//取得现有字体
 	font.setPointSize(fontsize);				//设置字体大小
+	qDebug()<<font.family();
 	ui->lb_date->setFont(font);
 	ui->lb_weather->setFont(font);
 	ui->lb_cputemp->setFont(font);
@@ -177,10 +178,21 @@ void MainWindow::onTimerOut()
 
 void MainWindow::upInterface()	//界面颜色更新
 {
-	this->setStyleSheet("color: rgb("+
-						QString::number(grayscale*color_R)+", "+
+    QString str = "color: rgb(20,20,20);background-color: rgb(0, 0, 0);";
+    str = "background-color: rgb(0, 0, 0);color: rgb("+
+            QString::number(grayscale*color_R)+", "+
+            QString::number(grayscale*color_G)+", "+
+            QString::number(grayscale*color_B)+");";
+    /*
+    this->setStyleSheet("color: rgb("+
+                        QString::number(grayscale*color_R)+", "+
 						QString::number(grayscale*color_G)+", "+
-						QString::number(grayscale*color_B)+");background-color: rgb(0, 0, 0);");
+                        QString::number(grayscale*color_B)+");background-color: rgb(0, 0, 0);");
+                        */
+    this->setStyleSheet(str);
+    ui->lcd_time->setStyleSheet(str);
+    ui->centralWidget->setStyleSheet(str);
+    //qDebug()<<this->styleSheet();
 }
 
 #ifdef LINUX
@@ -189,11 +201,14 @@ void MainWindow::onSensor()
 	bool ok;
 	QDateTime time = QDateTime::currentDateTime();
 	float light=getbh1750(&f_i2c);
+    //qDebug()<<time.toString("hh");
+
 	if( (time.toString("hh").toInt(&ok) >= 7 ) && (time.toString("hh").toInt(&ok) <= 19 ) )
 	{
 		grayscale=255;
 		upInterface();
-	}
+        //qDebug()<<"isokssssssss";
+    }
 	else if(light>=0)
 	{
 		if(light>30)
@@ -219,8 +234,8 @@ void MainWindow::onSensor()
 		printf("read light error\r\n");
 		grayscale=255;
 		upInterface();
-	}
-	printf("light is %6.3f\r\n",light);
+    }
+    printf("light is %6.3f\t %d\r\n",light,grayscale);
 
 	double temp=0,pressure=0;
 	if(getbmp180(&f_i2c,&temp,&pressure)==0)

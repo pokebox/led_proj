@@ -1,0 +1,11 @@
+*.o
+*.user
+*.autosave
+led_proj
+led_proj2
+*.bf
+moc_*.*
+.qmake.stash
+Makefile
+*.ini
+ui_*.h
