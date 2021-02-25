@@ -79,9 +79,6 @@ alternate-background-color: rgb(0, 68, 255);</string>
       <property name="scaledContents">
        <bool>false</bool>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
       <property name="wordWrap">
        <bool>false</bool>
       </property>

@@ -165,7 +165,7 @@ void MainWindow::onTimerOut()
 	ui->lcd_time->display(time.toString("hh:mm:ss"));
 
 	bool ok=true;
-	if((time.toString("mm") == "01") || (time.toString("mm") == "30") || (time.toString("mm") == "45"))
+    if((time.toString("mm") == "03") || (time.toString("mm") == "30") || (time.toString("mm") == "45"))
 	{
 		if((time.toString("ss").toInt(&ok,10) >= 0) && (time.toString("ss").toInt(&ok,10) <= 1))
 		{
@@ -200,7 +200,7 @@ void MainWindow::onSensor()
 {
 	bool ok;
 	QDateTime time = QDateTime::currentDateTime();
-	float light=getbh1750(&f_i2c);
+    float light=getbh1750(&f_i2c);
     //qDebug()<<time.toString("hh");
 
 	if( (time.toString("hh").toInt(&ok) >= 7 ) && (time.toString("hh").toInt(&ok) <= 19 ) )
@@ -237,11 +237,21 @@ void MainWindow::onSensor()
     }
     printf("light is %6.3f\t %d\r\n",light,grayscale);
 
-	double temp=0,pressure=0;
+    double temp=0,pressure=0,humidity=0;
 	if(getbmp180(&f_i2c,&temp,&pressure)==0)
 	{
 		ui->lb_sensor->setText("温度："+QString::number(temp,10,1)+" 气压："+QString::number(pressure, 10, 2));
 	}
+
+    if (time.toString("ss").toInt(&ok)%30 == 0 ) {
+        QString data = "{\"datetime\":\"" + time.toString("yyyy-MM-dd hh:mm:ss")
+                + "\",\"sensor\":{\"temperature\":"
+                + QString::number(temp,10,1) + ",\"humidity\":"
+                + QString::number(humidity,10,1) + ",\"pressure\":"
+                + QString::number(pressure, 10, 2) + ",\"luminance\":"
+                + QString::number(light, 10, 1) + "}}";
+        socketWrite(data.toUtf8());
+    }
 	timer_sensor->start(200);
 }
 
@@ -424,7 +434,7 @@ void MainWindow::socketOpen()
 	if(!socket->waitForConnected(3000))
 	{
 		qDebug()<<"连接失败";
-		ui->label_1->setText("socket失败;"+ui->label_1->text());
+        ui->label_1->setText("socket失败");
 	}
 	else {
 		qDebug()<<"连接成功";
