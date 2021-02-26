@@ -128,6 +128,13 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 	ui->label_2->setFont(font);
 	ui->label_3->setFont(font);
 	ui->label_4->setFont(font);
+
+    ui->label_1->setMaximumWidth((width/2)-2);
+    ui->label_2->setMaximumWidth((width/2)-2);
+    ui->label_3->setMaximumWidth((width/2)-2);
+    ui->label_4->setMaximumWidth((width/2)-2);
+    ui->lb_cputemp->setMaximumWidth((width/2)-2);
+    ui->lb_sensor->setMaximumWidth((width/2)-2);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -413,6 +420,8 @@ void MainWindow::replyFinished(QNetworkReply *reply)
 						getWeather();
 					}
 				}
+                //将天气信息送到socket
+                socketWrite(QString(QJsonDocument(all).toJson(QJsonDocument::Compact)).toUtf8());
 			}
 		}
 		else
@@ -443,6 +452,9 @@ void MainWindow::socketOpen()
 
 void MainWindow::socketWrite(QByteArray data)
 {
+    if (!socket->isOpen()){
+        socketOpen();
+    }
 	qint64 writeResult = socket->write(data);
 	bool boolFlush = socket->flush();
 	if(writeResult != -1 && boolFlush==1)
@@ -647,6 +659,27 @@ void MainWindow::socketRead()
 					upInterface();
 				}
 			}
+            // 显示固定文本信息
+            else if (!obj.value("ledproj").isUndefined()) {
+                if (obj.value("ledproj").toObject().value("show1").isString()) {
+                    ui->label_1->setText(obj.value("ledproj").toObject().value("show1").toString());
+                }
+                if (obj.value("ledproj").toObject().value("show2").isString()) {
+                    ui->label_2->setText(obj.value("ledproj").toObject().value("show2").toString());
+                }
+                if (obj.value("ledproj").toObject().value("show3").isString()) {
+                    ui->label_3->setText(obj.value("ledproj").toObject().value("show3").toString());
+                }
+                if (obj.value("ledproj").toObject().value("show4").isString()) {
+                    ui->label_4->setText(obj.value("ledproj").toObject().value("show4").toString());
+                }
+                if (obj.value("ledproj").toObject().value("show5").isString()) {
+                    ui->lb_cputemp->setText(obj.value("ledproj").toObject().value("show5").toString());
+                }
+                if (obj.value("ledproj").toObject().value("show6").isString()) {
+                    ui->lb_sensor->setText(obj.value("ledproj").toObject().value("show6").toString());
+                }
+            }
 			else
 			{
 				qDebug()<<obj;
