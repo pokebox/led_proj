@@ -25,11 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-		mainwindow.cpp
+		mainwindow.cpp \
+    textticker.cpp
 
 
 HEADERS += \
-		mainwindow.h
+		mainwindow.h \
+		textticker.h
 
 FORMS += \
 		mainwindow.ui

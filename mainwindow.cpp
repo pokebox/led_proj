@@ -199,6 +199,10 @@ void MainWindow::upInterface()	//界面颜色更新
     this->setStyleSheet(str);
     ui->lcd_time->setStyleSheet(str);
     ui->centralWidget->setStyleSheet(str);
+
+    QColor color(grayscale*color_R, grayscale*color_G, grayscale*color_B);
+    ui->label_1->setColor(color);
+    ui->label_3->setColor(color);
     //qDebug()<<this->styleSheet();
 }
 
