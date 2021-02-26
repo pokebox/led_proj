@@ -251,7 +251,7 @@ void MainWindow::onSensor()
     double temp=0,pressure=0,humidity=0;
 	if(getbmp180(&f_i2c,&temp,&pressure)==0)
 	{
-		ui->lb_sensor->setText("温度："+QString::number(temp,10,1)+" 气压："+QString::number(pressure, 10, 2));
+        ui->lb_sensor->setText("温度:"+QString::number(temp,10,1)+" 气压:"+QString::number(pressure, 10, 1));
 	}
 
     if (time.toString("ss").toInt(&ok)%30 == 0 ) {
