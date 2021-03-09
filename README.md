@@ -2,9 +2,10 @@
 
 ![](doc/img/screen.png)
 
-[Bilibili视频：【树莓派】时间投影](https://www.bilibili.com/video/BV1jE41187Uq)
+![](doc/img/img01.png)
 
-<iframe src="//player.bilibili.com/player.html?aid=74070889&bvid=BV1jE41187Uq&cid=126711946&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+**[Bilibili视频：【树莓派】时间投影](https://www.bilibili.com/video/BV1jE41187Uq)**
+
 
 ## 界面说明：
 
@@ -64,7 +65,7 @@
 
 **apikey**：在高德开放平台申请到的天气查询API key密钥
 
-**city**：要获取的天气信息对应的城市代码，可在https://developer.amap.com/api/webservice/download下载城市编码表查询。
+**city**：要获取的天气信息对应的城市代码，可在[https://developer.amap.com/api/webservice/download](https://developer.amap.com/api/webservice/download) 下载城市编码表查询。
 
 
 
@@ -91,5 +92,7 @@
 }
 ```
 
-修改对应标签内的内容并通过socket发送即可在指定位置显示设定的字符。注意：有定义默认信息显示的位置在一定时间后会被自动刷新覆盖。
+修改对应标签内的内容并通过socket发送即可在指定位置显示设定的字符。
+
+注意：有定义默认信息显示的位置在一定时间后会被自动刷新覆盖。
 
