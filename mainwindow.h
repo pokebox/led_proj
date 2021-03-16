@@ -28,6 +28,8 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 
+#include <QWebSocket>
+
 #define LOW_BATTERY 2800
 #ifdef LINUX
 extern "C" {
@@ -53,6 +55,7 @@ public:
 	void socketWrite(QByteArray data);
 	void socketOpen();
 	void socketRead();
+    void msgProc(QByteArray &json);
 	void upInterface();
 	void StringToHex(QString str, QByteArray & senddata);
 	char ConvertHexChar(char ch);
@@ -80,11 +83,14 @@ private:
 
 	QNetworkAccessManager *manager;
 	QTcpSocket *socket;
+    QWebSocket *ws_client;
 	QSettings *config;
 	QString weather_apikey = "";
 	QString weather_city = "";
 	QString socketIP="127.0.0.1";
 	quint16 socketPort=19085;
+    QString wscUrl = "";    //ws客户端连接地址
+    bool wscEnabled = true;
 	QString PortName = "";
 	quint16 BaudRate=9600;
 

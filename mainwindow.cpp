@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QIODevice>
 
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -40,6 +41,32 @@ MainWindow::MainWindow(QWidget *parent) :
 		socketPort=config->value("port").toUInt(&ok);
 	qDebug()<<socketPort;
 	config->endGroup();
+
+
+    //websocket控制配置
+    config->beginGroup("wsClient");
+    if(config->value("url").toString() == "")
+        config->setValue("url", "ws://127.0.0.1:1880/ledproj");
+    if((config->value("enabled").toString() == "1") || (config->value("enabled").toString() == "true"))
+        wscEnabled=true;
+    else if((config->value("enabled").toString() == "0") || (config->value("enabled").toString() == "false"))
+        wscEnabled=false;
+    else config->setValue("enabled", "true");
+
+    wscUrl = config->value("url").toString();
+    config->endGroup();
+
+    ws_client = new QWebSocket();
+    ws_client->setParent(this);
+    if (wscEnabled) {
+        ws_client->open(QUrl(wscUrl));
+    }
+
+    connect(ws_client, &QWebSocket::textMessageReceived, [this](const QString &msg) {
+        qDebug()<<QString("ws data: ") + msg;
+        QByteArray tmpjson = msg.toUtf8();
+        msgProc(tmpjson);
+    });
 
 	//串口配置文件
 	config->beginGroup("serial");
@@ -99,6 +126,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	getWeather();
 	socketOpen();
 	socketWrite("{\"cmd\": \"getDeviceList\"}");
+    ws_client->sendTextMessage("{\"from\":\"websocket\",\"cmd\": \"getDeviceList\"}");
 }
 
 MainWindow::~MainWindow()
@@ -262,6 +290,7 @@ void MainWindow::onSensor()
                 + QString::number(pressure, 10, 2) + ",\"luminance\":"
                 + QString::number(light, 10, 1) + "}}";
         socketWrite(data.toUtf8());
+        ws_client->sendTextMessage(data);
     }
 	timer_sensor->start(200);
 }
@@ -426,6 +455,7 @@ void MainWindow::replyFinished(QNetworkReply *reply)
 				}
                 //将天气信息送到socket
                 socketWrite(QString(QJsonDocument(all).toJson(QJsonDocument::Compact)).toUtf8());
+                ws_client->sendTextMessage(QString(QJsonDocument(all).toJson(QJsonDocument::Compact)));
 			}
 		}
 		else
@@ -442,16 +472,18 @@ void MainWindow::replyFinished(QNetworkReply *reply)
 
 void MainWindow::socketOpen()
 {
-	socket->abort();
-	socket->connectToHost(socketIP,socketPort);
-	if(!socket->waitForConnected(3000))
-	{
-		qDebug()<<"连接失败";
-        ui->label_1->setText("socket失败");
-	}
-	else {
-		qDebug()<<"连接成功";
-	}
+    if (!wscEnabled){
+        socket->abort();
+        socket->connectToHost(socketIP,socketPort);
+        if(!socket->waitForConnected(3000))
+        {
+            qDebug()<<"连接失败";
+            ui->label_1->setText("socket失败");
+        }
+        else {
+            qDebug()<<"连接成功";
+        }
+    }
 }
 
 void MainWindow::socketWrite(QByteArray data)
@@ -473,11 +505,16 @@ void MainWindow::socketWrite(QByteArray data)
 
 void MainWindow::socketRead()
 {
-	QByteArray buff;
-	buff=socket->readAll();
-	//qDebug()<<buff;
+    QByteArray buff;
+    buff=socket->readAll();
+    //qDebug()<<buff;
+    msgProc(buff);
+}
+
+void MainWindow::msgProc(QByteArray &json)
+{
 	QJsonParseError json_err;
-	QJsonDocument json_doc = QJsonDocument::fromJson(buff,&json_err);
+    QJsonDocument json_doc = QJsonDocument::fromJson(json,&json_err);
 	if(json_err.error == QJsonParseError::NoError)
 	{
 		if(json_doc.isObject())
