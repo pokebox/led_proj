@@ -26,26 +26,30 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-		mainwindow.cpp \
-    textticker.cpp
+        mainwindow.cpp \
+    msgproc.cpp \
+    sensor.cpp \
+    socket.cpp \
+    textticker.cpp \
+    weather.cpp
 
 
 HEADERS += \
-		mainwindow.h \
-		textticker.h
+        mainwindow.h \
+        textticker.h
 
 FORMS += \
-		mainwindow.ui
+        mainwindow.ui
 
 
 unix {
 message("USE I2C")
 DEFINES+=LINUX
 SOURCES += dht/common_dht_read.c \
-		dht/Raspberry_Pi_2/pi_2_dht_read.c \
-		dht/Raspberry_Pi_2/pi_2_mmio.c \
-		i2c/bh1750.c \
-		i2c/bmp180.c
+        dht/Raspberry_Pi_2/pi_2_dht_read.c \
+        dht/Raspberry_Pi_2/pi_2_mmio.c \
+        i2c/bh1750.c \
+        i2c/bmp180.c
 
 HEADERS += dht/Raspberry_Pi_2/pi_2_dht_read.h \
         dht/Raspberry_Pi_2/pi_2_mmio.h \

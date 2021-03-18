@@ -71,6 +71,9 @@ public slots:
 #endif
 
 private:
+    void weatherInit();
+    void socketInit();
+
 	Ui::MainWindow *ui;
 	QTimer *timer;
 	QSerialPort *serial;    //全局串口
