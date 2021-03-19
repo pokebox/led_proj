@@ -5,6 +5,8 @@
 
 void MainWindow::weatherInit()
 {
+    int min = 30;
+    bool ok;
     //天气
     config->beginGroup("weather");
     if(config->value("apikey").toString() == "")
@@ -16,14 +18,27 @@ void MainWindow::weatherInit()
         config->setValue("city","");
     else
         weather_city=config->value("city").toString();
+
+    if (config->value("updatefreq").toString() == "")
+        config->setValue("updatefreq", "30");
+    else
+        min = config->value("updatefreq").toInt(&ok);
     config->endGroup();
+
+    manager = new QNetworkAccessManager(this);
+    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(replyFinished(QNetworkReply*)));
+
+    weather_timer = new QTimer();
+    connect(weather_timer, SIGNAL(timeout()), this, SLOT(getWeather()));
+    weather_timer->start(6000*min);
 }
 
 void MainWindow::getWeather()
 {
     if(weather_apikey=="")
     {
-        ui->lb_weather->setText("没有设置apikey");
+        //ui->lb_weather->setText("没有设置apikey");
+        weatherStr1 = "没有设置apikey";
     }
     else
     {

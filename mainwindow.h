@@ -32,6 +32,7 @@
 
 #define LOW_BATTERY 2800
 #ifdef LINUX
+#include "sensorthread.h"
 extern "C" {
 	#include "i2c/bh1750.h"
 	#include "i2c/bmp180.h"
@@ -52,18 +53,21 @@ public:
 	~MainWindow();
 	void resizeEvent(QResizeEvent* event);
 	void keyPressEvent(QKeyEvent *event);
-	void socketWrite(QByteArray data);
+    void wsWrite(QString data);
+    void socketWrite(QByteArray data);
 	void socketOpen();
 	void socketRead();
     void msgProc(QByteArray &json);
-	void upInterface();
 	void StringToHex(QString str, QByteArray & senddata);
-	char ConvertHexChar(char ch);
+    char ConvertHexChar(char ch);
 
 public slots:
 	void onTimerOut();
 	void replyFinished(QNetworkReply *reply);
 	void getWeather();
+    void upSensor(double t, double p, double h);
+    void upInterface();
+    void upCPUStr(QString str);
 #ifdef LINUX
 	void onSensor();
 	void getDHT();
@@ -73,15 +77,18 @@ public slots:
 private:
     void weatherInit();
     void socketInit();
+    void sensorInit();
 
 	Ui::MainWindow *ui;
 	QTimer *timer;
+    QTimer *weather_timer;
 	QSerialPort *serial;    //全局串口
 #ifdef LINUX
 	QTimer *timer_DHT;
 	QTimer *timer_sensor;
 	int f_i2c;
 	QFile *cputemp;
+    sensorThread *senThread;
 #endif
 
 	QNetworkAccessManager *manager;
@@ -99,11 +106,17 @@ private:
 
 	double m_send_bytes__ = 0;
 	double m_recv_bytes__ = 0;
-	int grayscale=255;	//灰度
-	int color_R = 1;	//红色
-	int color_G = 1;	//绿色
-	int color_B = 1;	//蓝色
-	int color_mode = 7;	//七种颜色模式
+    int grayscale=255;	//灰度
+    int color_R = 1;	//红色
+    int color_G = 1;	//绿色
+    int color_B = 1;	//蓝色
+    int color_mode = 7;	//七种颜色模式
+    double sensor_temp = 0;
+    double sensor_pressure = 0;
+    double sensor_humidity = 0;
+    QString weatherStr1 = "";   //天气标签1内容
+    QString weatherStr2 = "";   //天气标签2内容
+
 };
 
 #endif // MAINWINDOW_H

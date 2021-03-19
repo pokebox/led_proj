@@ -5,7 +5,6 @@
 
 void MainWindow::socketInit()
 {
-
     bool ok;
     //socket控制配置
     config->beginGroup("socket");
@@ -21,6 +20,8 @@ void MainWindow::socketInit()
     qDebug()<<socketPort;
     config->endGroup();
 
+    socket = new QTcpSocket();
+    connect(socket,&QTcpSocket::readyRead,this,&MainWindow::socketRead);
 
     //websocket控制配置
     config->beginGroup("wsClient");
@@ -46,7 +47,14 @@ void MainWindow::socketInit()
         QByteArray tmpjson = msg.toUtf8();
         msgProc(tmpjson);
     });
+
+    connect(ws_client, &QWebSocket::disconnected,[this](){
+        qDebug()<<"连接断开，尝试重连";
+        ws_client->close();
+        ws_client->open(QUrl(wscUrl));
+    });
 }
+
 void MainWindow::socketOpen()
 {
     if (!wscEnabled){
@@ -61,6 +69,11 @@ void MainWindow::socketOpen()
             qDebug()<<"连接成功";
         }
     }
+}
+
+void MainWindow::wsWrite(QString data)
+{
+    ws_client->sendTextMessage(data);
 }
 
 void MainWindow::socketWrite(QByteArray data)

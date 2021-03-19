@@ -28,7 +28,6 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     msgproc.cpp \
-    sensor.cpp \
     socket.cpp \
     textticker.cpp \
     weather.cpp
@@ -49,13 +48,15 @@ SOURCES += dht/common_dht_read.c \
         dht/Raspberry_Pi_2/pi_2_dht_read.c \
         dht/Raspberry_Pi_2/pi_2_mmio.c \
         i2c/bh1750.c \
-        i2c/bmp180.c
+        i2c/bmp180.c \
+        sensorthread.cpp
 
 HEADERS += dht/Raspberry_Pi_2/pi_2_dht_read.h \
         dht/Raspberry_Pi_2/pi_2_mmio.h \
         dht/common_dht_read.h \
         i2c/bh1750.h \
-        i2c/bmp180.h
+        i2c/bmp180.h \
+        sensorthread.h
 }
 else
 {
