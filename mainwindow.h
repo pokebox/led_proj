@@ -68,11 +68,6 @@ public slots:
     void upSensor(double t, double p, double h);
     void upInterface();
     void upCPUStr(QString str);
-#ifdef LINUX
-	void onSensor();
-	void getDHT();
-	void get_net_usage();
-#endif
 
 private:
     void weatherInit();
