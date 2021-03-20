@@ -33,7 +33,7 @@ public slots:
 
 private:
     int f_i2c;
-    QFile *cputemp;
+    QString cputemp;
 };
 
 #endif // MYTHREAD_H

@@ -52,9 +52,7 @@ public:
 	explicit MainWindow(QWidget *parent = nullptr);
 	~MainWindow();
 	void resizeEvent(QResizeEvent* event);
-	void keyPressEvent(QKeyEvent *event);
-    void wsWrite(QString data);
-    void socketWrite(QByteArray data);
+    void keyPressEvent(QKeyEvent *event);
 	void socketOpen();
 	void socketRead();
     void msgProc(QByteArray &json);
@@ -62,6 +60,8 @@ public:
     char ConvertHexChar(char ch);
 
 public slots:
+    void wsWrite(QString data);
+    void socketWrite(QByteArray data);
 	void onTimerOut();
 	void replyFinished(QNetworkReply *reply);
 	void getWeather();

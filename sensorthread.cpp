@@ -69,7 +69,8 @@ void sensorThread::onSensor()
                 + QString::number(temp,10,1) + ",\"humidity\":"
                 + QString::number(humidity,10,1) + ",\"pressure\":"
                 + QString::number(pressure, 10, 2) + ",\"luminance\":"
-                + QString::number(light, 10, 1) + "}}";
+                + QString::number(light, 10, 1) + "},"
+                + "\"cputemp\":" + cputemp + "}";
         emit socketStr(data);
     }
 
@@ -81,18 +82,18 @@ void sensorThread::onSensor()
 
 void sensorThread::getCPUtemp()
 {
-    cputemp = new QFile("/sys/class/thermal/thermal_zone0/temp");
-    if(!cputemp->open(QIODevice::ReadOnly | QIODevice::Text))
+    QFile *cpufile = new QFile("/sys/class/thermal/thermal_zone0/temp");
+    if(!cpufile->open(QIODevice::ReadOnly | QIODevice::Text))
     {
         qDebug()<<"读取温度失败";
     }
     else
     {
-        QTextStream stream(cputemp);
+        QTextStream stream(cpufile);
         QString string = stream.readAll();
-        cputemp->close();
-        QString s = QString::number(string.toLong() /1000);
-        emit setCPUStr("CPU: "+s+" ℃");
+        cpufile->close();
+        cputemp = QString::number(string.toLong() /1000);
+        emit setCPUStr("CPU: "+cputemp+" ℃");
     }
-    cputemp->close();
+    cpufile->close();
 }

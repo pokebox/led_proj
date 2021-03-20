@@ -47,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(senThread, SIGNAL(updateSensor()), this, SLOT(upInterface()));
     connect(senThread, SIGNAL(setSensorValue(double,double,double)), this, SLOT(upSensor(double,double,double)));
     connect(senThread, SIGNAL(setCPUStr(QString)), this, SLOT(upCPUStr(QString)));
+    connect(senThread, SIGNAL(socketStr(QString)), this, SLOT(wsWrite(QString)));
     senThread->start();
 #endif
 	ui->lcd_time->setDigitCount(8);			//设置lcd位数
