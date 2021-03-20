@@ -63,7 +63,7 @@ void sensorThread::onSensor()
         emit setSensorValue(temp, pressure, humidity);
     }
 
-    if (time.toString("ss").toInt(&ok)%30 == 0 ) {
+    if ((time.toString("ss").toInt(&ok)%30 == 0 ) && (send_ws_flag == false)) {
         QString data = "{\"datetime\":\"" + time.toString("yyyy-MM-dd hh:mm:ss")
                 + "\",\"sensor\":{\"temperature\":"
                 + QString::number(temp,10,1) + ",\"humidity\":"
@@ -72,6 +72,10 @@ void sensorThread::onSensor()
                 + QString::number(light, 10, 1) + "},"
                 + "\"cputemp\":" + cputemp + "}";
         emit socketStr(data);
+        send_ws_flag=true;
+    }
+    else if (time.toString("ss").toInt(&ok)%30 != 0){
+        send_ws_flag=false;
     }
 
     if (time.toString("ss").toInt(&ok)%2 == 0 )

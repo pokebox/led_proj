@@ -34,6 +34,7 @@ public slots:
 private:
     int f_i2c;
     QString cputemp;
+    bool send_ws_flag=false;
 };
 
 #endif // MYTHREAD_H
