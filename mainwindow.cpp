@@ -141,7 +141,7 @@ void MainWindow::onTimerOut()
 	ui->lcd_time->display(time.toString("hh:mm:ss"));
 }
 
-void MainWindow::upInterface(double gs)	//界面颜色更新
+void MainWindow::upInterface(int gs)	//界面颜色更新
 {
     if (gs!=-1)
     {
