@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 #ifdef LINUX
     senThread = new sensorThread(this);
-    connect(senThread, SIGNAL(updateSensor(double)), this, SLOT(upInterface(double)));
+    connect(senThread, SIGNAL(updateSensor(int)), this, SLOT(upInterface(int)));
     connect(senThread, SIGNAL(setSensorValue(double,double,double)), this, SLOT(upSensor(double,double,double)));
     connect(senThread, SIGNAL(setCPUStr(QString)), this, SLOT(upCPUStr(QString)));
     connect(senThread, SIGNAL(socketStr(QString)), this, SLOT(wsWrite(QString)));
@@ -143,6 +143,7 @@ void MainWindow::onTimerOut()
 
 void MainWindow::upInterface(int gs)	//界面颜色更新
 {
+    qDebug()<<"light info upInterface: gs is "<<gs;
     if (gs!=-1)
     {
         grayscale=gs;

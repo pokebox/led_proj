@@ -15,7 +15,7 @@ void sensorThread::run()
     }
     while (1) {
         onSensor();
-        usleep(100000);
+        usleep(200000);
     }
 }
 
