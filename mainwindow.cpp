@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 #ifdef LINUX
     senThread = new sensorThread(this);
-    connect(senThread, SIGNAL(updateSensor()), this, SLOT(upInterface()));
+    connect(senThread, SIGNAL(updateSensor(double)), this, SLOT(upInterface(double)));
     connect(senThread, SIGNAL(setSensorValue(double,double,double)), this, SLOT(upSensor(double,double,double)));
     connect(senThread, SIGNAL(setCPUStr(QString)), this, SLOT(upCPUStr(QString)));
     connect(senThread, SIGNAL(socketStr(QString)), this, SLOT(wsWrite(QString)));
@@ -141,8 +141,12 @@ void MainWindow::onTimerOut()
 	ui->lcd_time->display(time.toString("hh:mm:ss"));
 }
 
-void MainWindow::upInterface()	//界面颜色更新
+void MainWindow::upInterface(double gs)	//界面颜色更新
 {
+    if (gs!=-1)
+    {
+        grayscale=gs;
+    }
     QString str = "color: rgb(20,20,20);background-color: rgb(0, 0, 0);";
     str = "background-color: rgb(0, 0, 0);color: rgb("+
             QString::number(grayscale*color_R)+", "+

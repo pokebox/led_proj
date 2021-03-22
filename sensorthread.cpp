@@ -54,7 +54,7 @@ void sensorThread::onSensor()
         printf("read light error\r\n");
         grayscale=255;
     }
-    emit updateSensor();
+    emit updateSensor(grayscale);
     printf("light is %6.3f\t %d\r\n", light, grayscale);
 
     double temp=0,pressure=0,humidity=0;

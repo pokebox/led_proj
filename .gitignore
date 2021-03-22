@@ -1,5 +1,5 @@
 *.o
-*.user
+*.user*
 *.autosave
 led_proj
 led_proj2

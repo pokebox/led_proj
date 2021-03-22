@@ -66,7 +66,7 @@ public slots:
 	void replyFinished(QNetworkReply *reply);
 	void getWeather();
     void upSensor(double t, double p, double h);
-    void upInterface();
+    void upInterface(double gs=-1);
     void upCPUStr(QString str);
 
 private:

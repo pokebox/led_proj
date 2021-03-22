@@ -27,7 +27,7 @@ public:
 signals:
     void setCPUStr(QString data);
     void socketStr(QString data);
-    void updateSensor();
+    void updateSensor(double light);
     void setSensorValue(double t, double p, double h);
 public slots:
 
